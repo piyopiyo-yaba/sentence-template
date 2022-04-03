@@ -1,0 +1,232 @@
+/*
+  Josh's Custom CSS Reset
+  https://www.joshwcomeau.com/css/custom-css-reset/
+*/
+*, *::before, *::after {
+    box-sizing: border-box
+}
+
+* {
+    margin: 0
+}
+
+html, body {
+    height: 100%
+}
+
+body {
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased
+}
+
+img, picture, video, canvas, svg {
+    display: block;
+    max-width: 100%
+}
+
+input, button, textarea, select {
+    font: inherit
+}
+
+p, h1, h2, h3, h4, h5, h6 {
+    overflow-wrap: break-word
+}
+
+#root, #__next {
+    isolation: isolate
+}
+
+/* ---------------------------------- */
+
+body {
+    margin: 0px;
+    padding: 0px;
+    color: #ececec;
+    background-color: #595757;
+    font-family: "Helvetica Neue",
+        Arial,
+        "Hiragino Kaku Gothic ProN",
+        "Hiragino Sans",
+        Meiryo,
+        sans-serif;
+}
+
+button {
+    color: #3E3A39;
+}
+
+.appContainer {
+    min-height: 100vh;
+    position: relative;
+    padding-bottom: 10vh;
+    box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+    .appGrid {
+        display: grid;
+        grid-template-rows: 6vh repeat(3, 28vh);
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+            "head head"
+            "rep rep"
+            "sen sen"
+            "tem pla";
+    }
+}
+
+@media (min-width:768px) {
+    .appGrid {
+        display: grid;
+        grid-template-rows: 6vh repeat(2, 42vh);
+        grid-template-columns: 0.75fr 2.5fr 1fr;
+        grid-template-areas:
+            "head head head"
+            "tem sen pla"
+            "tem rep pla";
+    }
+}
+
+
+
+.areaHeader {
+    grid-area: head;
+}
+
+.areaSentence {
+    grid-area: sen;
+}
+
+.areaReplaced {
+    grid-area: rep;
+}
+
+.areaPlaceHolder {
+    grid-area: pla;
+}
+
+.areaTemlate {
+    grid-area: tem;
+}
+
+.area {
+    padding: 1em;
+}
+
+.btnBlock {
+    display: block;
+    width: 100%;
+}
+
+.list {
+    padding: 0px;
+    list-style-type: none;
+    overflow-wrap: break-word;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    height: 90%;
+}
+
+.templateListItem {
+    border: 3px solid #EFEFEF;
+    margin-bottom: 1em;
+}
+
+.placeHolderListItem {
+    border: 3px solid #EFEFEF;
+    margin-bottom: 1em;
+}
+
+.listItem-monokuro1 {
+    background-color: #B5B5B6;
+}
+
+.inputBlock {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.textareaBlock {
+    display: block;
+    box-sizing: border-box;
+    height:5em;
+    width: 100%;
+}
+
+.resizable {
+    resize: vertical;
+    max-height: 80%;
+}
+
+.unResizable {
+    resize: none;
+}
+
+.footer {
+    width: 100%;
+    height: 10vh;
+    position: absolute;
+    bottom: 0;
+    /*下に固定*/
+}
+
+.monokuro0 {
+    background-color: #B5B5B6;
+}
+
+.monokuro1 {
+    background-color: #898989;
+}
+
+.monokuro2 {
+    background-color: #595757;
+}
+
+.monokuro3 {
+    background-color: #3E3A39;
+}
+
+.monokuro4 {
+    background-color: #0f0e17;
+}
+
+.deleteBtnColor {
+    background-color: #C3C2B4;
+}
+
+.selectBtnColor {
+    background-color: #C3C2B4;
+}
+
+.cloneBtnColor {
+    background-color: #C3C2B4;
+}
+
+.createBtnColor {
+    background-color: #C3C2B4;
+}
+
+.copyBtnColor {
+    background-color: #C3C2B4;
+}
+
+.exportBtnColor {
+    background-color: #C3C2B4;
+}
+
+.inputColor {
+    background-color: #C3C2B4;
+}
+
+button:hover {
+    background-color: rgb(255, 201, 102);
+}
+
+.activeBorderColor {
+    border-color: rgb(255, 201, 102);
+}
+
+.textColorWhite {
+    color: #B5B5B6;
+}       
