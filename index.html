@@ -17,11 +17,24 @@
 
             </header>
 
-            <div id="replaced" class="areaReplaced area monokuro4">
+            <div id="sentence" class="areaSentence area monokuro4">
 
                 <span v-if="!(noTemplate && invalidCursor)">
                     テンプレート:{{currentTemplate.name}}
                 </span>
+
+                <div v-if="!(noTemplate && invalidCursor)">
+
+                    <p>置換前文章</p>
+
+                    <textarea class="textareaBlock resizable monokuro3 textColorWhite"
+                        :placeholder="CONSTANT.EXAM_SENTENCE" v-model="currentTemplate.sentence"></textarea>
+
+                </div>
+
+            </div>
+
+            <div id="replaced" class="areaReplaced area monokuro4">
 
                 <div v-if="!(noTemplate && invalidCursor)">
 
@@ -37,18 +50,7 @@
 
             </div>
 
-            <div id="sentence" class="areaSentence area monokuro4">
 
-                <div v-if="!(noTemplate && invalidCursor)">
-
-                    <p>置換前文章</p>
-
-                    <textarea class="textareaBlock resizable monokuro3 textColorWhite"
-                        :placeholder="CONSTANT.EXAM_SENTENCE" v-model="currentTemplate.sentence"></textarea>
-
-                </div>
-
-            </div>
 
             <div id="templates" class="areaTemlate area monokuro2">
 
@@ -141,29 +143,68 @@
 
 <script src="https://unpkg.com/vue@3.2.31/dist/vue.global.prod.js"></script>
 <script>
-    'use strict';
-    class Template {
-        id = null;
-        name = "";
-        placeholderList = [];
-        sentence = "";
-        uid = 0;
+    (() => {
+        class Template {
+            id = null;
+            name = "";
+            placeholderList = [];
+            sentence = "";
+            uid = 0;
 
-        get replacedSentence() {
-            let replacedSentence = this.sentence.slice(0);
+            get replacedSentence() {
+                let replacedSentence = this.sentence.slice(0);
 
-            for (let i = 0; i < this.placeholderList.length; i += 1) {
-                const { key, value } = this.placeholderList[i];
-                replacedSentence = replacedSentence.replaceAll(`{{${key}}}`, value);
+                for (let i = 0; i < this.placeholderList.length; i += 1) {
+                    const { key, value } = this.placeholderList[i];
+                    replacedSentence = replacedSentence.replaceAll(`{{${key}}}`, value);
+                }
+
+                return replacedSentence;
+            };
+
+            static Placeholder = class Placeholder {
+                id = null;
+                key = "";
+                value = "";
+
+                static validate = parsed => {
+                    for (let prop in parsed) {
+                        switch (prop) {
+                            case "id":
+                                if (typeof parsed[prop] !== "number" || !Number.isInteger(parsed[prop])) {
+                                    return false;
+                                }
+                                break;
+                            case "key":
+                                if (typeof parsed[prop] !== "string") {
+                                    return false;
+                                }
+                                break;
+                            case "value":
+                                if (typeof parsed[prop] !== "string") {
+                                    return false;
+                                }
+                                break;
+
+                            default:
+                                return false;
+                        }
+                    }
+                    return true;
+                }
             }
 
-            return replacedSentence;
-        };
+            static deserialize = (parsed) => {
+                if (!this.validate(parsed)) {
+                    throw new Error("jsonが不正です")
+                }
 
-        static Placeholder = class Placeholder {
-            id = null;
-            key = "";
-            value = "";
+                const t = new this;
+                for (let prop in parsed) {
+                    t[prop] = parsed[prop];
+                }
+                return t;
+            }
 
             static validate = parsed => {
                 for (let prop in parsed) {
@@ -173,13 +214,23 @@
                                 return false;
                             }
                             break;
-                        case "key":
+                        case "name":
                             if (typeof parsed[prop] !== "string") {
                                 return false;
                             }
                             break;
-                        case "value":
+                        case "placeholderList":
+                            if (!Array.isArray(parsed[prop]) || !this.Placeholder.validate(parsed[prop])) {
+                                return false;
+                            }
+                            break;
+                        case "sentence":
                             if (typeof parsed[prop] !== "string") {
+                                return false;
+                            }
+                            break;
+                        case "uid":
+                            if (typeof parsed[prop] !== "number" || !Number.isInteger(parsed[prop])) {
                                 return false;
                             }
                             break;
@@ -187,193 +238,92 @@
                         default:
                             return false;
                     }
+                    return true;
                 }
-                return true;
-            }
-        }
-
-        static deserialize = (parsed) => {
-            if (!this.validate(parsed)) {
-                throw new Error("jsonが不正です")
             }
 
-            const t = new this;
-            for (let prop in parsed) {
-                t[prop] = parsed[prop];
-            }
-            return t;
-        }
-
-        static validate = parsed => {
-            for (let prop in parsed) {
-                switch (prop) {
-                    case "id":
-                        if (typeof parsed[prop] !== "number" || !Number.isInteger(parsed[prop])) {
-                            return false;
-                        }
-                        break;
-                    case "name":
-                        if (typeof parsed[prop] !== "string") {
-                            return false;
-                        }
-                        break;
-                    case "placeholderList":
-                        if (!Array.isArray(parsed[prop]) || !this.Placeholder.validate(parsed[prop])) {
-                            return false;
-                        }
-                        break;
-                    case "sentence":
-                        if (typeof parsed[prop] !== "string") {
-                            return false;
-                        }
-                        break;
-                    case "uid":
-                        if (typeof parsed[prop] !== "number" || !Number.isInteger(parsed[prop])) {
-                            return false;
-                        }
-                        break;
-
-                    default:
-                        return false;
-                }
-                return true;
-            }
-        }
-
-        clone() {
-            return Template.deserialize(JSON.parse(JSON.stringify(this)));
-        }
-
-        addPlaceholder(key, value) {
-            const placeHolder = new Template.Placeholder;
-
-            placeHolder.id = this.uid;
-            placeHolder.key = key;
-            placeHolder.value = value;
-            this.placeholderList.push(placeHolder);
-
-            this.uid += 1;
-        };
-
-        deletePlaceholder(index) {
-            this.placeholderList.splice(index, 1);
-        };
-    }
-    const CONSTANT = {
-        TEMPLATE_NAME: "テンプレートの名前を入力してください...",
-        PLACEHOLDER_KEY: "プレースホルダーキーの値を入力してください...",
-        EXAM_TEMPLATE_NAME: "テンプレートに名前を付けられます...",
-        EXAM_REPLACED: `例)1月1日、21度、晴れ、日直:置き換え太郎
-お疲れ様です、置き換え太郎です。1月1日の報告です...`,
-        EXAM_SENTENCE: `例){{月}}月{{日}}日、{{温度}}度、{{天気}}、日直:{{名前}}
-お疲れ様です、{{名前}}です。{{月}}月{{日}}日の報告です...`,
-        EXAM_KEY: "プレースホルダーのキーを入力...",
-        EXAM_VALUE: "プレースホルダーと置き換わる文字列を入力...",
-    };
-    const App = {
-        created() {
-            const reader = new FileReader;
-
-            const readJSON = (event) => {
-                const file = event.target.files[0];
-
-                if (file == null) {
-                    console.log("file未選択");
-                    return;
-                }
-
-                reader.readAsText(file);
+            clone() {
+                return Template.deserialize(JSON.parse(JSON.stringify(this)));
             }
 
-            const onload = (event) => {
-                try {
-                    const parsed = JSON.parse(event.target.result);
-                    console.log("parsed json")
+            addPlaceholder(key, value) {
+                const placeHolder = new Template.Placeholder;
 
-                    if (parsed.templateList == null || !Array.isArray(parsed.templateList)) {
-                        throw new Error("jsonが不正です")
-                    }
-                    if (typeof parsed.cursorCurrentTemplate !== "number" || !Number.isInteger(parsed.cursorCurrentTemplate)) {
-                        throw new Error("jsonが不正です")
-                    }
-                    if (typeof parsed.uid !== "number" || !Number.isInteger(parsed.uid)) {
-                        throw new Error("jsonが不正です")
-                    }
-                    const deserializedTemplateList = [];
-                    for (const temp of parsed.templateList) {
-                        const deserializedTemplate = Template.deserialize(temp);
-                        deserializedTemplateList.push(deserializedTemplate);
-                    }
+                placeHolder.id = this.uid;
+                placeHolder.key = key;
+                placeHolder.value = value;
+                this.placeholderList.push(placeHolder);
 
-                    this.flushTemplateList();
-                    this.templateList.push(...deserializedTemplateList);
-                    this.cursorCurrentTemplate = parsed.cursorCurrentTemplate;
-                    this.uid = parsed.uid;
-                } catch (error) {
-                    console.error(error);
-                    throw error;
-                }
-
+                this.uid += 1;
             };
 
-            reader.onload = onload;
-            this.readJSON = readJSON;
-        },
+            deletePlaceholder(index) {
+                this.placeholderList.splice(index, 1);
+            };
+        }
+        const CONSTANT = {
+            TEMPLATE_NAME: "テンプレートの名前を入力してください...",
+            PLACEHOLDER_KEY: "プレースホルダーキーの値を入力してください...",
+            EXAM_TEMPLATE_NAME: "テンプレートに名前を付けられます...",
+            EXAM_REPLACED: `例)1月1日、21度、晴れ、日直:置き換え太郎
+お疲れ様です、置き換え太郎です。1月1日の報告です...`,
+            EXAM_SENTENCE: `例){{月}}月{{日}}日、{{温度}}度、{{天気}}、日直:{{名前}}
+お疲れ様です、{{名前}}です。{{月}}月{{日}}日の報告です...`,
+            EXAM_KEY: "プレースホルダーのキーを入力...",
+            EXAM_VALUE: "プレースホルダーと置き換わる文字列を入力...",
+        };
+        const App = {
+            created() {
+                const reader = new FileReader;
 
-        mounted() {
-            const name = "";
-            const template = new Template;
-            template.name = name;
-            template.id = this.uid;
+                const readJSON = (event) => {
+                    const file = event.target.files[0];
 
-            this.templateList.push(template);
-            this.uid += 1;
+                    if (file == null) {
+                        console.log("file未選択");
+                        return;
+                    }
 
-            // 利便性の向上のために新規テンプレート作成時に空のプレースホルダーをあらかじめ作成しておく
-            const addedTemplateIndex = this.templateList.length - 1;
-            this.templateList[addedTemplateIndex].addPlaceholder("", "");
-        },
-
-        data() {
-            return {
-                templateList: [],
-                cursorCurrentTemplate: 0,
-                uid: 0,
-                CONSTANT: CONSTANT,
-                draggingList: null,
-            }
-        },
-
-        computed: {
-            noTemplate() {
-                return this.templateList.length === 0;
-            },
-
-            invalidCursor() {
-                if (!Number.isInteger(this.cursorCurrentTemplate)) {
-                    return true;
+                    reader.readAsText(file);
                 }
 
-                if (this.cursorCurrentTemplate < 0 || this.cursorCurrentTemplate >= this.templateList.length) {
-                    return true;
-                }
+                const onload = (event) => {
+                    try {
+                        const parsed = JSON.parse(event.target.result);
+                        console.log("parsed json")
 
-                return false;
+                        if (parsed.templateList == null || !Array.isArray(parsed.templateList)) {
+                            throw new Error("jsonが不正です")
+                        }
+                        if (typeof parsed.cursorCurrentTemplate !== "number" || !Number.isInteger(parsed.cursorCurrentTemplate)) {
+                            throw new Error("jsonが不正です")
+                        }
+                        if (typeof parsed.uid !== "number" || !Number.isInteger(parsed.uid)) {
+                            throw new Error("jsonが不正です")
+                        }
+                        const deserializedTemplateList = [];
+                        for (const temp of parsed.templateList) {
+                            const deserializedTemplate = Template.deserialize(temp);
+                            deserializedTemplateList.push(deserializedTemplate);
+                        }
+
+                        this.flushTemplateList();
+                        this.templateList.push(...deserializedTemplateList);
+                        this.cursorCurrentTemplate = parsed.cursorCurrentTemplate;
+                        this.uid = parsed.uid;
+                    } catch (error) {
+                        console.error(error);
+                        throw error;
+                    }
+
+                };
+
+                reader.onload = onload;
+                this.readJSON = readJSON;
             },
 
-            currentTemplate() {
-                return this.templateList[this.cursorCurrentTemplate];
-            },
-        },
-
-        methods: {
-            addPlaceholderOnCurrentTemplate() {
-                const key = prompt(CONSTANT.PLACEHOLDER_KEY);
-                const value = "";
-                this.currentTemplate.addPlaceholder(key, value);
-            },
-            addTemplate() {
-                const name = prompt(CONSTANT.TEMPLATE_NAME);
+            mounted() {
+                const name = "";
                 const template = new Template;
                 template.name = name;
                 template.id = this.uid;
@@ -385,78 +335,131 @@
                 const addedTemplateIndex = this.templateList.length - 1;
                 this.templateList[addedTemplateIndex].addPlaceholder("", "");
             },
-            clipReplacedSentence() {
-                var copyTarget = document.getElementById("copyTarget");
 
-                copyTarget.select();
-
-                document.execCommand("Copy");
-            },
-            cloneTemplate(index) {
-                const clone = this.templateList[index].clone();
-                clone.id = this.uid;
-                clone.uid = 0;
-
-                this.templateList.push(clone);
-                this.uid += 1;
-            },
-            deleteTemplate(index) {
-                if (index <= this.cursorCurrentTemplate) {
-                    this.cursorCurrentTemplate = index === 0 ? 0 : index - 1;
+            data() {
+                return {
+                    templateList: [],
+                    cursorCurrentTemplate: 0,
+                    uid: 0,
+                    CONSTANT: CONSTANT,
+                    draggingList: null,
                 }
+            },
 
-                this.templateList.splice(index, 1);
-            },
-            deletePlaceholderOnCurrentTemplate(index) {
-                this.currentTemplate.deletePlaceholder(index);
-            },
-            dragListItem(e, index, list) {
-                this.draggingInfo = { dragIndex: index, dragList: list };
-            },
-            dropListItem(e, index, list) {
-                const { dragIndex, dragList } = this.draggingInfo;
+            computed: {
+                noTemplate() {
+                    return this.templateList.length === 0;
+                },
 
-                if (dragIndex == null || dragList == null || list !== dragList) {
-                    console.log(list, dragList);
-                    return;
-                }
+                invalidCursor() {
+                    if (!Number.isInteger(this.cursorCurrentTemplate)) {
+                        return true;
+                    }
 
-                const deleteList = list.splice(dragIndex, 1);
-                list.splice(index, 0, deleteList[0]);
-                this.draggingInfo = null;
-            },
-            editPlaceholderKeyOnCurrentTemplate(index, key) {
-                this.currentTemplate.placeholderList[index].key = key;
-            },
-            editPlaceholderValueOnCurrentTemplate(index, value) {
-                this.currentTemplate.placeholderList[index].value = value;
-            },
-            exportAsJSON() {
-                const json = JSON.stringify({
-                    templateList: this.templateList,
-                    cursorCurrentTemplate: this.cursorCurrentTemplate,
-                    uid: this.uid,
-                });
+                    if (this.cursorCurrentTemplate < 0 || this.cursorCurrentTemplate >= this.templateList.length) {
+                        return true;
+                    }
 
-                const blob = new Blob([json], { type: "application/json" });
+                    return false;
+                },
 
-                const a = document.createElement('a');
-                a.download = "templaterSave.json";
-                a.href = window.URL.createObjectURL(blob);
-                a.click();
+                currentTemplate() {
+                    return this.templateList[this.cursorCurrentTemplate];
+                },
             },
-            flushTemplateList() {
-                this.templateList.splice(0);
-                this.cursorCurrentTemplate = 0;
-                this.uid = 0;
+
+            methods: {
+                addPlaceholderOnCurrentTemplate() {
+                    const key = prompt(CONSTANT.PLACEHOLDER_KEY);
+                    const value = "";
+                    this.currentTemplate.addPlaceholder(key, value);
+                },
+                addTemplate() {
+                    const name = prompt(CONSTANT.TEMPLATE_NAME);
+                    const template = new Template;
+                    template.name = name;
+                    template.id = this.uid;
+
+                    this.templateList.push(template);
+                    this.uid += 1;
+
+                    // 利便性の向上のために新規テンプレート作成時に空のプレースホルダーをあらかじめ作成しておく
+                    const addedTemplateIndex = this.templateList.length - 1;
+                    this.templateList[addedTemplateIndex].addPlaceholder("", "");
+                },
+                clipReplacedSentence() {
+                    var copyTarget = document.getElementById("copyTarget");
+
+                    copyTarget.select();
+
+                    document.execCommand("Copy");
+                },
+                cloneTemplate(index) {
+                    const clone = this.templateList[index].clone();
+                    clone.id = this.uid;
+                    clone.uid = 0;
+
+                    this.templateList.push(clone);
+                    this.uid += 1;
+                },
+                deleteTemplate(index) {
+                    if (index <= this.cursorCurrentTemplate) {
+                        this.cursorCurrentTemplate = index === 0 ? 0 : index - 1;
+                    }
+
+                    this.templateList.splice(index, 1);
+                },
+                deletePlaceholderOnCurrentTemplate(index) {
+                    this.currentTemplate.deletePlaceholder(index);
+                },
+                dragListItem(e, index, list) {
+                    this.draggingInfo = { dragIndex: index, dragList: list };
+                },
+                dropListItem(e, index, list) {
+                    const { dragIndex, dragList } = this.draggingInfo;
+
+                    if (dragIndex == null || dragList == null || list !== dragList) {
+                        console.log(list, dragList);
+                        return;
+                    }
+
+                    const deleteList = list.splice(dragIndex, 1);
+                    list.splice(index, 0, deleteList[0]);
+                    this.draggingInfo = null;
+                },
+                editPlaceholderKeyOnCurrentTemplate(index, key) {
+                    this.currentTemplate.placeholderList[index].key = key;
+                },
+                editPlaceholderValueOnCurrentTemplate(index, value) {
+                    this.currentTemplate.placeholderList[index].value = value;
+                },
+                exportAsJSON() {
+                    const json = JSON.stringify({
+                        templateList: this.templateList,
+                        cursorCurrentTemplate: this.cursorCurrentTemplate,
+                        uid: this.uid,
+                    });
+
+                    const blob = new Blob([json], { type: "application/json" });
+
+                    const a = document.createElement('a');
+                    a.download = "templaterSave.json";
+                    a.href = window.URL.createObjectURL(blob);
+                    a.click();
+                },
+                flushTemplateList() {
+                    this.templateList.splice(0);
+                    this.cursorCurrentTemplate = 0;
+                    this.uid = 0;
+                },
+                importJSON(e) {
+                    this.readJSON(e);
+                },
+                selectTemplate(index) {
+                    this.cursorCurrentTemplate = index;
+                },
             },
-            importJSON(e) {
-                this.readJSON(e);
-            },
-            selectTemplate(index) {
-                this.cursorCurrentTemplate = index;
-            },
-        },
-    };
-    Vue.createApp(App).mount("#app");
+        };
+        Vue.createApp(App).mount("#app");
+    })();
 </script>
